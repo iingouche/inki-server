@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "cinema-project",
+			"path": "../../.."
+		},
+		{
+			"name": "front",
+			"path": "../../../../front"
+		}
+	],
+	"settings": {}
+}
