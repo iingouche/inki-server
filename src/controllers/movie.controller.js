@@ -50,13 +50,9 @@ exports.createMovie = async (req, res) => {
 
 exports.getMovies = async (req, res) => {
   try {
-    // const movies = await Movie.find().select();
-    const movies = [
-      {title: 'Movie', description: 'some description for movie 1'},
-      {title: 'Movie 2', description: 'some description for movie 1'},
-    ]
+    const movies = await Movie.find().select();
+    return res.json(movies);
 
-    res.json(movies);
   } catch (error) {
     res.status(500).json({
       message: "Error fetching movies",
