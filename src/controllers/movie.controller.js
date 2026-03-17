@@ -24,19 +24,25 @@ exports.createMovie = async (req, res) => {
     let previewUrl = null;
     let videoUrl = null;
 
-    if (req.files?.preview) {
-      previewUrl = await uploadFile(req.files.preview[0], 'previews');
+    const previewFile =
+      req.files?.poster?.[0] || req.files?.preview?.[0] || null;
+    const videoFile =
+      req.files?.movie?.[0] || req.files?.video?.[0] || null;
+
+    if (previewFile) {
+      const folder = req.files?.poster ? 'posters' : 'previews';
+      previewUrl = await uploadFile(previewFile, folder);
     }
 
-    if (req.files?.video) {
-      videoUrl = await uploadFile(req.files.video[0], 'videos');
+    if (videoFile) {
+      videoUrl = await uploadFile(videoFile, 'videos');
     }
 
     const movie = await Movie.create({
       title,
       description,
       price,
-      isPaid: price > 0,
+      isPaid: Number(price) > 0,
       previewImage: previewUrl,
       videoUrl
     });
