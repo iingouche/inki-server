@@ -15,7 +15,9 @@ router.post(
   roleMiddleware('admin'),
   upload.fields([
     { name: 'preview', maxCount: 1 },
-    { name: 'video', maxCount: 1 }
+    { name: 'video', maxCount: 1 },
+    { name: 'poster', maxCount: 1 },
+    { name: 'movie', maxCount: 1 }
   ]),
   movieController.createMovie
 );
