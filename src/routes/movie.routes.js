@@ -8,6 +8,9 @@ const roleMiddleware = require('../middleware/role.middleware');
 const upload = require('../middleware/upload.middleware');
 
 router.get('/', movieController.getMovies);
+router.get('/:id', movieController.getMovieById);
+router.get('/:id/preview', movieController.getMoviePreview);
+router.get('/:id/video', movieController.getMovieVideo);
 
 router.post(
   '/',
