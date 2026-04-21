@@ -127,15 +127,32 @@ exports.getMovieVideo = async (req, res) => {
       return res.status(404).json({ message: "Movie video not found" });
     }
 
-    const range = req.headers.range;
     const head = await s3.headObject({ Bucket: bucket, Key: key }).promise();
     const total = head.ContentLength || 0;
     const contentType = head.ContentType || 'application/octet-stream';
+    const range = req.headers.range;
+
+    if (req.method === 'HEAD') {
+      return res.status(200).set({
+        'Content-Length': total,
+        'Content-Type': contentType,
+        'Accept-Ranges': 'bytes',
+      }).end();
+    }
 
     if (range) {
       const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
       const start = parseInt(startStr, 10) || 0;
-      const end = endStr ? parseInt(endStr, 10) : total - 1;
+      const requestedEnd = endStr ? parseInt(endStr, 10) : total - 1;
+      const end = Math.min(requestedEnd, Math.max(total - 1, 0));
+
+      if (start >= total || start > end) {
+        return res.status(416).set({
+          'Content-Range': `bytes */${total}`,
+          'Accept-Ranges': 'bytes',
+        }).end();
+      }
+
       const chunkSize = end - start + 1;
 
       res.writeHead(206, {

@@ -41,6 +41,34 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use((err, req, res, next) => {
+  if (!err) {
+    return next();
+  }
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({
+      message: 'Uploaded file is too large. Reduce file size and try again.',
+      code: err.code,
+    });
+  }
+
+  if (typeof err.code === 'string' && err.code.startsWith('LIMIT_')) {
+    return res.status(400).json({
+      message: err.message || 'Upload request is invalid.',
+      code: err.code,
+    });
+  }
+
+  if (err.status === 413) {
+    return res.status(413).json({
+      message: 'Request entity too large.',
+    });
+  }
+
+  return next(err);
+});
+
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
