@@ -1,5 +1,6 @@
 const Movie = require('../models/Movie');
 const s3 = require('../config/minio');
+const fs = require('fs');
 
 const toSafeObjectName = (originalName) => {
   if (!originalName) {
@@ -19,15 +20,27 @@ const toSafeObjectName = (originalName) => {
 
 const uploadFile = async (file, folder) => {
   const safeName = toSafeObjectName(file.originalname);
+  const body = file.path
+    ? fs.createReadStream(file.path)
+    : file.buffer;
+
   const params = {
     Bucket: 'cinema',
     Key: `${folder}/${Date.now()}_${safeName}`,
-    Body: file.buffer,
+    Body: body,
     ContentType: file.mimetype
   };
 
   const uploaded = await s3.upload(params).promise();
   return uploaded.Location;
+};
+
+const removeTempFile = async (file) => {
+  if (!file?.path) {
+    return;
+  }
+
+  await fs.promises.unlink(file.path).catch(() => {});
 };
 
 exports.createMovie = async (req, res) => {
@@ -46,13 +59,17 @@ exports.createMovie = async (req, res) => {
     const videoFile =
       req.files?.movie?.[0] || req.files?.video?.[0] || null;
 
-    if (previewFile) {
-      const folder = req.files?.poster ? 'posters' : 'previews';
-      previewUrl = await uploadFile(previewFile, folder);
-    }
+    try {
+      if (previewFile) {
+        const folder = req.files?.poster ? 'posters' : 'previews';
+        previewUrl = await uploadFile(previewFile, folder);
+      }
 
-    if (videoFile) {
-      videoUrl = await uploadFile(videoFile, 'videos');
+      if (videoFile) {
+        videoUrl = await uploadFile(videoFile, 'videos');
+      }
+    } finally {
+      await Promise.all([removeTempFile(previewFile), removeTempFile(videoFile)]);
     }
 
     const movie = await Movie.create({
